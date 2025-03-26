@@ -2,9 +2,12 @@
 #include <tf2>
 #include <nativevotes>
 
+#define TOGGLETYPE_LENGTH 3
+
 bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded;
 
-ConVar g_cvDisableDamageSpread, g_cvPreRoundPushEnable, g_cvServerArena;
+ConVar g_cvDisableDamageSpread, g_cvPreRoundPushEnable, g_cvServerArena, g_cvSpecVote, g_cvVoteDuration;
+ConVar g_cvSpreadVoteMenuPercent, g_cvPushVoteMenuPercent;
 
 public Plugin myinfo = {
     name = "TF2 Damage Spread and Pre-Round Push Vote",
@@ -18,9 +21,16 @@ public void OnPluginStart() {
     g_cvDisableDamageSpread = FindConVar("tf_damage_disablespread");
     g_cvPreRoundPushEnable = FindConVar("tf_preround_push_from_damage_enable");
     g_cvServerArena = FindConVar("tf_gamemode_arena");
+    g_cvSpecVote = FindConVar("sv_vote_allow_spectators");
+    g_cvVoteDuration = FindConVar("sv_vote_timer_duration");
 
-    RegServerCmd("sm_votespread", HandleVoteSpread, "Start a vote to toggle damage spread.");
-    RegServerCmd("sm_votepush", HandleVotePush, "Start a vote to toggle pre-round push.");
+    RegConsoleCmd("sm_votespread", Cmd_HandleVoteSpread, "Start a vote to toggle damage spread.");
+    RegConsoleCmd("sm_votepush", Cmd_HandleVotePush, "Start a vote to toggle pre-round push.");
+
+    g_cvSpreadVoteMenuPercent = CreateConVar("sv_vote_issue_damagespread_quorum", "0.6", "The minimum ratio of eligible players needed to pass a damage spread vote.", FCVAR_NOTIFY, true, 0.1, true, 1.0);
+    g_cvPushVoteMenuPercent = CreateConVar("sv_vote_issue_preroundpush_quorum", "0.6", "The minimum ratio of eligible players needed to pass a pre-round damage push vote.", FCVAR_NOTIFY, true, 0.1, true, 1.0);
+
+    AutoExecConfig(true);
 }
 
 public void OnMapStart() {
@@ -43,6 +53,129 @@ public void TF2_OnWaitingForPlayersEnd() {
     if (!g_cvServerArena.BoolValue) {
         g_bServerWaitingForPlayers = false;
     }
+}
+
+void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
+    if (g_bNativeVotesLoaded) {
+        if (NativeVotes_IsVoteInProgress()) {
+            PrintToChat(client, "A vote is already in progress.");
+            return;
+        }
+        if (NativeVotes_CheckVoteDelay() != 0) {
+            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay());
+            return;
+        }
+        if (g_bServerWaitingForPlayers) {
+            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Waiting);
+            return;
+        }
+        if ((!g_cvSpecVote.BoolValue && GetClientTeam(client) == 1) || GetClientTeam(client) == 0) {
+            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Spectators);
+            return;
+        }
+    } else {
+        PrintToChat(client, "Server has not yet loaded the required library.");
+        return;
+    }
+
+    NativeVote vote = new NativeVote(isSpreadVote ? HandleSpreadVote : HandlePushVote, NativeVotesType_Custom_Mult);
+    vote.Initiator = client;
+    vote.SetDetails("Turn %s %s?", toggleType, isSpreadVote ? "random damage spread": "pre-round damage push");
+    vote.AddItem("yes", "Yes");
+    vote.AddItem("no", "No");
+    vote.DisplayVoteToAll(g_cvVoteDuration.IntValue);
+}
+
+public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int items) {
+    switch (action) {
+        case MenuAction_End: {
+            vote.Close();
+        }
+        case MenuAction_VoteCancel: {
+            if (client == VoteCancel_NoVotes) {
+                vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
+            } else {
+                vote.DisplayFail(NativeVotesFail_Generic);
+            }
+        }
+        case MenuAction_VoteEnd: {
+            if (client == NATIVEVOTES_VOTE_NO || client == NATIVEVOTES_VOTE_INVALID) {
+                vote.DisplayFail(NativeVotesFail_Loses);
+            } else {
+                char item[64];
+                float percent, limit;
+                int votes, totalVotes;
+
+                GetMenuVoteInfo(items, votes, totalVotes);
+                vote.GetItem(client, item, sizeof(item));
+
+                percent = float(votes) / float (totalVotes);
+                limit = g_cvSpreadVoteMenuPercent.FloatValue;
+
+                if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
+                    char toggleType[TOGGLETYPE_LENGTH];
+                    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread ? "on" : "off" );
+                    vote.DisplayPassCustom("Turning %s random damage spread...", toggleType);
+                    g_cvDisableDamageSpread.BoolValue = !g_cvDisableDamageSpread.BoolValue;
+                } else {
+                    vote.DisplayFail(NativeVotesFail_Loses);
+                }
+            }
+        }
+    }
+}
+
+public int HandlePushVote (NativeVote vote, MenuAction action, int client, int items) {
+    switch (action) {
+        case MenuAction_End: {
+            vote.Close();
+        }
+        case MenuAction_VoteCancel: {
+            if (client == VoteCancel_NoVotes) {
+                vote.DisplayFail(NativeVotesFail_NotEnoughVotes);
+            } else {
+                vote.DisplayFail(NativeVotesFail_Generic);
+            }
+        }
+        case MenuAction_VoteEnd: {
+            if (client == NATIVEVOTES_VOTE_NO || client == NATIVEVOTES_VOTE_INVALID) {
+                vote.DisplayFail(NativeVotesFail_Loses);
+            } else {
+                char item[64];
+                float percent, limit;
+                int votes, totalVotes;
+
+                GetMenuVoteInfo(items, votes, totalVotes);
+                vote.GetItem(client, item, sizeof(item));
+
+                percent = float(votes) / float (totalVotes);
+                limit = g_cvPushVoteMenuPercent.FloatValue;
+
+                if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
+                    char toggleType[TOGGLETYPE_LENGTH];
+                    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "off" : "on" );
+                    vote.DisplayPassCustom("Turning %s pre-round damage push...", toggleType);
+                    g_cvPreRoundPushEnable.BoolValue = !g_cvPreRoundPushEnable.BoolValue;
+                } else {
+                    vote.DisplayFail(NativeVotesFail_Loses);
+                }
+            }
+        }
+    }
+}
+
+public Action Cmd_HandleVoteSpread(int client, int args) {
+    char toggleType[TOGGLETYPE_LENGTH];
+    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread ? "on" : "off" );
+    StartVote(client, true, toggleType);
+    return Plugin_Handled;
+}
+
+public Action Cmd_HandleVotePush(int client, int args) {
+    char toggleType[TOGGLETYPE_LENGTH];
+    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "off" : "on" );
+    StartVote(client, false, toggleType);
+    return Plugin_Handled;
 }
 
 public void OnLibraryAdded(const char[] name) {
