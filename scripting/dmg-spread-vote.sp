@@ -2,7 +2,7 @@
 #include <tf2>
 #include <nativevotes>
 
-#define TOGGLETYPE_LENGTH 3
+#define TOGGLETYPE_LENGTH 4
 
 bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded;
 
@@ -153,7 +153,7 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
 
                 if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
                     char toggleType[TOGGLETYPE_LENGTH];
-                    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "off" : "on" );
+                    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "on" : "off" );
                     vote.DisplayPassCustom("Turning %s pre-round damage push...", toggleType);
                     g_cvPreRoundPushEnable.BoolValue = !g_cvPreRoundPushEnable.BoolValue;
                 } else {
@@ -173,7 +173,7 @@ public Action Cmd_HandleVoteSpread(int client, int args) {
 
 public Action Cmd_HandleVotePush(int client, int args) {
     char toggleType[TOGGLETYPE_LENGTH];
-    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "off" : "on" );
+    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "on" : "off" );
     StartVote(client, false, toggleType);
     return Plugin_Handled;
 }
