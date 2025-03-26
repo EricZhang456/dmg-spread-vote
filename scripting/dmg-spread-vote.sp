@@ -36,10 +36,10 @@ public void OnPluginStart() {
 }
 
 public void OnServerEnterHibernation() {
-    if (g_cvSpreadVoteAllowed) {
+    if (g_cvSpreadVoteAllowed.BoolValue) {
         ResetConVar(g_cvDisableDamageSpread);
     }
-    if (g_cvPushVoteAllowed) {
+    if (g_cvPushVoteAllowed.BoolValue) {
         ResetConVar(g_cvPreRoundPushEnable);
     }
 }
