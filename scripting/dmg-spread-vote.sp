@@ -162,7 +162,7 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
 }
 
 public Action Cmd_HandleVoteSpread(int client, int args) {
-    if (g_cvSpreadVoteAllowed.BoolValue || client != 0) {
+    if (g_cvSpreadVoteAllowed.BoolValue && client != 0) {
         char toggleType[TOGGLETYPE_LENGTH];
         strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
         StartVote(client, true, toggleType);
@@ -173,7 +173,7 @@ public Action Cmd_HandleVoteSpread(int client, int args) {
 }
 
 public Action Cmd_HandleVotePush(int client, int args) {
-    if (g_cvPushVoteAllowed.BoolValue || client != 0) {
+    if (g_cvPushVoteAllowed.BoolValue && client != 0) {
         char toggleType[TOGGLETYPE_LENGTH];
         strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
         StartVote(client, false, toggleType);
