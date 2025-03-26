@@ -114,7 +114,7 @@ public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int
 
                 if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
                     char toggleType[TOGGLETYPE_LENGTH];
-                    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread ? "on" : "off" );
+                    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
                     vote.DisplayPassCustom("Turning %s random damage spread...", toggleType);
                     g_cvDisableDamageSpread.BoolValue = !g_cvDisableDamageSpread.BoolValue;
                 } else {
@@ -153,7 +153,7 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
 
                 if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
                     char toggleType[TOGGLETYPE_LENGTH];
-                    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "on" : "off" );
+                    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
                     vote.DisplayPassCustom("Turning %s pre-round damage push...", toggleType);
                     g_cvPreRoundPushEnable.BoolValue = !g_cvPreRoundPushEnable.BoolValue;
                 } else {
@@ -166,14 +166,14 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
 
 public Action Cmd_HandleVoteSpread(int client, int args) {
     char toggleType[TOGGLETYPE_LENGTH];
-    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread ? "on" : "off" );
+    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
     StartVote(client, true, toggleType);
     return Plugin_Handled;
 }
 
 public Action Cmd_HandleVotePush(int client, int args) {
     char toggleType[TOGGLETYPE_LENGTH];
-    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable ? "on" : "off" );
+    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
     StartVote(client, false, toggleType);
     return Plugin_Handled;
 }
