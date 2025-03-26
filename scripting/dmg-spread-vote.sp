@@ -7,7 +7,7 @@
 bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded;
 
 ConVar g_cvDisableDamageSpread, g_cvPreRoundPushEnable, g_cvServerArena, g_cvSpecVote, g_cvVoteDuration;
-ConVar g_cvSpreadVoteMenuPercent, g_cvPushVoteMenuPercent;
+ConVar g_cvSpreadVoteAllowed, g_cvPushVoteAllowed, g_cvSpreadVoteMenuPercent, g_cvPushVoteMenuPercent;
 
 public Plugin myinfo = {
     name = "TF2 Damage Spread and Pre-Round Push Vote",
@@ -24,13 +24,21 @@ public void OnPluginStart() {
     g_cvSpecVote = FindConVar("sv_vote_allow_spectators");
     g_cvVoteDuration = FindConVar("sv_vote_timer_duration");
 
-    RegConsoleCmd("sm_votespread", Cmd_HandleVoteSpread, "Start a vote to toggle damage spread.");
-    RegConsoleCmd("sm_votepush", Cmd_HandleVotePush, "Start a vote to toggle pre-round push.");
-
+    g_cvSpreadVoteAllowed = CreateConVar("sv_vote_issue_damagespread_allowed", "1", "Can players call votes to enable random damage spread?")
+    g_cvPushVoteAllowed = CreateConVar("sv_vote_issue_preroundpush_allowed", "1", "Can players call votes to enable pre-round damage push?")
     g_cvSpreadVoteMenuPercent = CreateConVar("sv_vote_issue_damagespread_quorum", "0.6", "The minimum ratio of eligible players needed to pass a damage spread vote.", FCVAR_NOTIFY, true, 0.1, true, 1.0);
     g_cvPushVoteMenuPercent = CreateConVar("sv_vote_issue_preroundpush_quorum", "0.6", "The minimum ratio of eligible players needed to pass a pre-round damage push vote.", FCVAR_NOTIFY, true, 0.1, true, 1.0);
 
     AutoExecConfig(true);
+}
+
+public void OnConfigsExecuted() {
+    if (g_cvSpreadVoteAllowed.BoolValue) {
+        RegConsoleCmd("sm_votespread", Cmd_HandleVoteSpread, "Start a vote to toggle damage spread.");
+    }
+    if (g_cvPushVoteAllowed.BoolValue) {
+        RegConsoleCmd("sm_votepush", Cmd_HandleVotePush, "Start a vote to toggle pre-round push.");
+    }
 }
 
 public void OnServerEnterHibernation() {
@@ -160,17 +168,25 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
 }
 
 public Action Cmd_HandleVoteSpread(int client, int args) {
-    char toggleType[TOGGLETYPE_LENGTH];
-    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
-    StartVote(client, true, toggleType);
-    return Plugin_Handled;
+    if (g_cvSpreadVoteAllowed.BoolValue) {
+        char toggleType[TOGGLETYPE_LENGTH];
+        strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
+        StartVote(client, true, toggleType);
+        return Plugin_Handled;
+    } else {
+        return Plugin_Continue;
+    }
 }
 
 public Action Cmd_HandleVotePush(int client, int args) {
-    char toggleType[TOGGLETYPE_LENGTH];
-    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
-    StartVote(client, false, toggleType);
-    return Plugin_Handled;
+    if (g_cvPushVoteAllowed.BoolValue) {
+        char toggleType[TOGGLETYPE_LENGTH];
+        strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
+        StartVote(client, false, toggleType);
+        return Plugin_Handled;
+    } else {
+        return Plugin_Continue;
+    }
 }
 
 public void OnLibraryAdded(const char[] name) {
