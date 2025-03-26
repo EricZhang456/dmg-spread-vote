@@ -81,7 +81,7 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
 
     NativeVote vote = new NativeVote(isSpreadVote ? HandleSpreadVote : HandlePushVote, NativeVotesType_Custom_Mult);
     vote.Initiator = client;
-    vote.SetDetails("Turn %s %s?", toggleType, isSpreadVote ? "random damage spread": "pre-round damage push");
+    vote.SetDetails("Turn %s %s?", toggleType, isSpreadVote ? "random damage spread" : "pre-round damage push");
     vote.AddItem("yes", "Yes");
     vote.AddItem("no", "No");
     vote.DisplayVoteToAll(g_cvVoteDuration.IntValue);
