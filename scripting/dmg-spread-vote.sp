@@ -36,8 +36,12 @@ public void OnPluginStart() {
 }
 
 public void OnServerEnterHibernation() {
-    ResetConVar(g_cvDisableDamageSpread);
-    ResetConVar(g_cvPreRoundPushEnable);
+    if (g_cvSpreadVoteAllowed) {
+        ResetConVar(g_cvDisableDamageSpread);
+    }
+    if (g_cvPushVoteAllowed) {
+        ResetConVar(g_cvPreRoundPushEnable);
+    }
 }
 
 public void TF2_OnWaitingForPlayersStart() {
