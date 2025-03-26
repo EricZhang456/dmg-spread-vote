@@ -3,5 +3,6 @@ scripting/include/
 scripting/compiled/
 scripting/spcomp*
 scripting/compile.sh
+scripting/compile.exe
 .vscode/
 plugins/
