@@ -29,8 +29,8 @@ public void OnPluginStart() {
 
     g_cvSpreadVoteAllowed = CreateConVar("sv_vote_issue_damagespread_allowed", "1", "Can players call votes to enable random damage spread?")
     g_cvPushVoteAllowed = CreateConVar("sv_vote_issue_preroundpush_allowed", "1", "Can players call votes to enable pre-round damage push?")
-    g_cvSpreadVoteMenuPercent = CreateConVar("sv_vote_issue_damagespread_quorum", "0.6", "The minimum ratio of eligible players needed to pass a damage spread vote.", FCVAR_NOTIFY, true, 0.1, true, 1.0);
-    g_cvPushVoteMenuPercent = CreateConVar("sv_vote_issue_preroundpush_quorum", "0.6", "The minimum ratio of eligible players needed to pass a pre-round damage push vote.", FCVAR_NOTIFY, true, 0.1, true, 1.0);
+    g_cvSpreadVoteMenuPercent = CreateConVar("sv_vote_issue_damagespread_quorum", "0.6", "The minimum ratio of eligible players needed to pass a damage spread vote.", 0, true, 0.1, true, 1.0);
+    g_cvPushVoteMenuPercent = CreateConVar("sv_vote_issue_preroundpush_quorum", "0.6", "The minimum ratio of eligible players needed to pass a pre-round damage push vote.", 0, true, 0.1, true, 1.0);
 
     AutoExecConfig(true);
 }
