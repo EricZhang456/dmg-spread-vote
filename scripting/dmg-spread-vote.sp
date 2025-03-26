@@ -33,11 +33,6 @@ public void OnPluginStart() {
     AutoExecConfig(true);
 }
 
-public void OnMapStart() {
-    ResetConVar(g_cvDisableDamageSpread);
-    ResetConVar(g_cvPreRoundPushEnable);
-}
-
 public void OnServerEnterHibernation() {
     ResetConVar(g_cvDisableDamageSpread);
     ResetConVar(g_cvPreRoundPushEnable);
