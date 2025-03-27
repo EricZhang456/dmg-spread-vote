@@ -65,13 +65,13 @@ public void TF2_OnWaitingForPlayersEnd() {
 }
 
 void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
-    int voteCooldownTimeLeft = GetTime() - isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime;
     if (g_bNativeVotesLoaded) {
+        int voteCooldownTimeLeft = GetTime() - isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime;
         if (NativeVotes_IsVoteInProgress()) {
             PrintToChat(client, "A vote is already in progress.");
             return;
         }
-        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < isSpreadVote : g_cvSpreadVoteCooldown.IntValue ? g_cvPushVoteCooldown.IntValue ) {
+        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue ){
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
             return;
         }
@@ -127,7 +127,6 @@ public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int
                     strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
                     vote.DisplayPassCustom("Turning %s random damage spread...", toggleType);
                     g_cvDisableDamageSpread.BoolValue = !g_cvDisableDamageSpread.BoolValue;
-                    g_iLastSpreadVoteTime = GetTime();
                 } else {
                     vote.DisplayFail(NativeVotesFail_Loses);
                 }
@@ -167,7 +166,6 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
                     strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
                     vote.DisplayPassCustom("Turning %s pre-round damage push...", toggleType);
                     g_cvPreRoundPushEnable.BoolValue = !g_cvPreRoundPushEnable.BoolValue;
-                    g_iLastPushVoteTime = GetTime();
                 } else {
                     vote.DisplayFail(NativeVotesFail_Loses);
                 }
@@ -181,6 +179,7 @@ public Action Cmd_HandleVoteSpread(int client, int args) {
         char toggleType[TOGGLETYPE_LENGTH];
         strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
         StartVote(client, true, toggleType);
+        g_iLastSpreadVoteTime = GetTime();
         return Plugin_Handled;
     } else {
         return Plugin_Continue;
@@ -192,6 +191,7 @@ public Action Cmd_HandleVotePush(int client, int args) {
         char toggleType[TOGGLETYPE_LENGTH];
         strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
         StartVote(client, false, toggleType);
+        g_iLastPushVoteTime = GetTime();
         return Plugin_Handled;
     } else {
         return Plugin_Continue;
