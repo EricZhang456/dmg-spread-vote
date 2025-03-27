@@ -71,7 +71,7 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
             PrintToChat(client, "A vote is already in progress.");
             return;
         }
-        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)){
+        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)) {
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
             return;
         }
