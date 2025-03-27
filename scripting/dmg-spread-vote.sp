@@ -94,6 +94,7 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
     vote.AddItem("yes", "Yes");
     vote.AddItem("no", "No");
     vote.DisplayVoteToAll(g_cvVoteDuration.IntValue);
+    isSpreadVote ? (g_iLastSpreadVoteTime = GetTime()) : (g_iLastPushVoteTime = GetTime());
 }
 
 public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int items) {
@@ -179,7 +180,6 @@ public Action Cmd_HandleVoteSpread(int client, int args) {
         char toggleType[TOGGLETYPE_LENGTH];
         strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
         StartVote(client, true, toggleType);
-        g_iLastSpreadVoteTime = GetTime();
         return Plugin_Handled;
     } else {
         return Plugin_Continue;
@@ -191,7 +191,6 @@ public Action Cmd_HandleVotePush(int client, int args) {
         char toggleType[TOGGLETYPE_LENGTH];
         strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
         StartVote(client, false, toggleType);
-        g_iLastPushVoteTime = GetTime();
         return Plugin_Handled;
     } else {
         return Plugin_Continue;
