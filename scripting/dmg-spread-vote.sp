@@ -4,7 +4,7 @@
 
 #define TOGGLETYPE_LENGTH 4
 
-bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded;
+bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded = false;
 
 ConVar g_cvDisableDamageSpread, g_cvPreRoundPushEnable, g_cvServerArena, g_cvSpecVote, g_cvVoteDuration;
 ConVar g_cvSpreadVoteAllowed, g_cvPushVoteAllowed, g_cvSpreadVoteMenuPercent, g_cvPushVoteMenuPercent;
@@ -27,12 +27,16 @@ public void OnPluginStart() {
     RegConsoleCmd("sm_votespread", Cmd_HandleVoteSpread, "Start a vote to toggle damage spread.");
     RegConsoleCmd("sm_votepush", Cmd_HandleVotePush, "Start a vote to toggle pre-round push.");
 
-    g_cvSpreadVoteAllowed = CreateConVar("sv_vote_issue_damagespread_allowed", "1", "Can players call votes to enable random damage spread?")
-    g_cvPushVoteAllowed = CreateConVar("sv_vote_issue_preroundpush_allowed", "1", "Can players call votes to enable pre-round damage push?")
+    g_cvSpreadVoteAllowed = CreateConVar("sv_vote_issue_damagespread_allowed", "1", "Can players call votes to toggle random damage spread?");
+    g_cvPushVoteAllowed = CreateConVar("sv_vote_issue_preroundpush_allowed", "1", "Can players call votes to toggle pre-round damage push?");
     g_cvSpreadVoteMenuPercent = CreateConVar("sv_vote_issue_damagespread_quorum", "0.6", "The minimum ratio of eligible players needed to pass a damage spread vote.", 0, true, 0.1, true, 1.0);
     g_cvPushVoteMenuPercent = CreateConVar("sv_vote_issue_preroundpush_quorum", "0.6", "The minimum ratio of eligible players needed to pass a pre-round damage push vote.", 0, true, 0.1, true, 1.0);
 
     AutoExecConfig(true);
+}
+
+public void OnMapStart() {
+    g_bServerWaitingForPlayers = false;
 }
 
 public void OnServerEnterHibernation() {
