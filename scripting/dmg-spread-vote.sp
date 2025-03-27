@@ -66,12 +66,12 @@ public void TF2_OnWaitingForPlayersEnd() {
 
 void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
     if (g_bNativeVotesLoaded) {
-        int voteCooldownTimeLeft = GetTime() - isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime;
+        int voteCooldownTimeLeft = GetTime() - (isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime);
         if (NativeVotes_IsVoteInProgress()) {
             PrintToChat(client, "A vote is already in progress.");
             return;
         }
-        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue ){
+        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)){
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
             return;
         }
