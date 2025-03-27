@@ -6,8 +6,10 @@
 
 bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded = false;
 
+int g_iLastSpreadVoteTime, g_iLastPushVoteTime;
+
 ConVar g_cvDisableDamageSpread, g_cvPreRoundPushEnable, g_cvServerArena, g_cvSpecVote, g_cvVoteDuration;
-ConVar g_cvSpreadVoteAllowed, g_cvPushVoteAllowed, g_cvSpreadVoteMenuPercent, g_cvPushVoteMenuPercent;
+ConVar g_cvSpreadVoteAllowed, g_cvPushVoteAllowed, g_cvSpreadVoteMenuPercent, g_cvPushVoteMenuPercent, g_cvSpreadVoteCooldown, g_cvPushVoteCooldown;
 
 public Plugin myinfo = {
     name = "TF2 Damage Spread and Pre-Round Push Vote",
@@ -31,6 +33,8 @@ public void OnPluginStart() {
     g_cvPushVoteAllowed = CreateConVar("sv_vote_issue_preroundpush_allowed", "1", "Can players call votes to toggle pre-round damage push?");
     g_cvSpreadVoteMenuPercent = CreateConVar("sv_vote_issue_damagespread_quorum", "0.6", "The minimum ratio of eligible players needed to pass a damage spread vote.", 0, true, 0.1, true, 1.0);
     g_cvPushVoteMenuPercent = CreateConVar("sv_vote_issue_preroundpush_quorum", "0.6", "The minimum ratio of eligible players needed to pass a pre-round damage push vote.", 0, true, 0.1, true, 1.0);
+    g_cvSpreadVoteCooldown = CreateConVar("sv_vote_issue_damagespread_cooldown", "300", "Minimum time before another damage spread vote can occur (in seconds).");
+    g_cvPushVoteCooldown = CreateConVar("sv_vote_issue_preroundpush_cooldown", "300", "Minimum time before another pre-round push vote can occur (in seconds).");
 
     AutoExecConfig(true);
 }
@@ -61,13 +65,14 @@ public void TF2_OnWaitingForPlayersEnd() {
 }
 
 void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
+    int voteCooldownTimeLeft = GetTime() - isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime;
     if (g_bNativeVotesLoaded) {
         if (NativeVotes_IsVoteInProgress()) {
             PrintToChat(client, "A vote is already in progress.");
             return;
         }
-        if (NativeVotes_CheckVoteDelay() != 0) {
-            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay());
+        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < isSpreadVote : g_cvSpreadVoteCooldown.IntValue ? g_cvPushVoteCooldown.IntValue ) {
+            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
             return;
         }
         if (g_bServerWaitingForPlayers) {
@@ -122,6 +127,7 @@ public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int
                     strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
                     vote.DisplayPassCustom("Turning %s random damage spread...", toggleType);
                     g_cvDisableDamageSpread.BoolValue = !g_cvDisableDamageSpread.BoolValue;
+                    g_iLastSpreadVoteTime = GetTime();
                 } else {
                     vote.DisplayFail(NativeVotesFail_Loses);
                 }
@@ -161,6 +167,7 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
                     strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
                     vote.DisplayPassCustom("Turning %s pre-round damage push...", toggleType);
                     g_cvPreRoundPushEnable.BoolValue = !g_cvPreRoundPushEnable.BoolValue;
+                    g_iLastPushVoteTime = GetTime();
                 } else {
                     vote.DisplayFail(NativeVotesFail_Loses);
                 }
