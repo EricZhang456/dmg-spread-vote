@@ -64,7 +64,7 @@ public void TF2_OnWaitingForPlayersEnd() {
 
 void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
     if (g_bNativeVotesLoaded) {
-        int voteCooldownTimeLeft = GetTime() - (isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime);
+        int voteCooldownTimePassed = GetTime() - (isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime);
         if (NativeVotes_IsVoteInProgress()) {
             PrintToChat(client, "A vote is already in progress.");
             return;
@@ -77,7 +77,11 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Spectators);
             return;
         }
-        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)) {
+        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimePassed < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)) {
+            int voteCooldownTimeLeft = (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue) - voteCooldownTimePassed;
+            if (voteCooldownTimeLeft > (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue) || voteCooldownTimeLeft < 0) {
+                voteCooldownTimeLeft = 0;
+            }
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
             return;
         }
