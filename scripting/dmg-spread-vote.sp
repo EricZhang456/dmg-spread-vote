@@ -71,16 +71,16 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
             PrintToChat(client, "A vote is already in progress.");
             return;
         }
-        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)) {
-            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
-            return;
-        }
         if (g_bServerWaitingForPlayers) {
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Waiting);
             return;
         }
         if ((!g_cvSpecVote.BoolValue && GetClientTeam(client) == 1) || GetClientTeam(client) == 0) {
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Spectators);
+            return;
+        }
+        if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimeLeft < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)) {
+            NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
             return;
         }
     } else {
