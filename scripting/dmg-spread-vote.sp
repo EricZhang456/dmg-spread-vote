@@ -2,8 +2,6 @@
 #include <tf2>
 #include <nativevotes>
 
-#define TOGGLETYPE_LENGTH 4
-
 bool g_bServerWaitingForPlayers, g_bNativeVotesLoaded = false;
 
 int g_iLastSpreadVoteTime, g_iLastPushVoteTime;
@@ -97,7 +95,24 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
     isSpreadVote ? (g_iLastSpreadVoteTime = GetTime()) : (g_iLastPushVoteTime = GetTime());
 }
 
-public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int items) {
+bool CountVote (NativeVote vote, int client, int items, bool isSpreadVote) {
+    char item[64];
+    int votes, totalVotes;
+
+    GetMenuVoteInfo(items, votes, totalVotes);
+    vote.GetItem(client, item, sizeof(item));
+
+    float percent = float(votes) / float(totalVotes);
+    float limit = isSpreadVote ? g_cvSpreadVoteMenuPercent.FloatValue : g_cvPushVoteMenuPercent.FloatValue;
+
+    if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+public int HandleSpreadVote(NativeVote vote, MenuAction action, int client, int items) {
     switch (action) {
         case MenuAction_End: {
             vote.Close();
@@ -113,20 +128,8 @@ public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int
             if (client == NATIVEVOTES_VOTE_NO || client == NATIVEVOTES_VOTE_INVALID) {
                 vote.DisplayFail(NativeVotesFail_Loses);
             } else {
-                char item[64];
-                float percent, limit;
-                int votes, totalVotes;
-
-                GetMenuVoteInfo(items, votes, totalVotes);
-                vote.GetItem(client, item, sizeof(item));
-
-                percent = float(votes) / float (totalVotes);
-                limit = g_cvSpreadVoteMenuPercent.FloatValue;
-
-                if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
-                    char toggleType[TOGGLETYPE_LENGTH];
-                    strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
-                    vote.DisplayPassCustom("Turning %s random damage spread...", toggleType);
+                if (CountVote(vote, client, items, true)) {
+                    vote.DisplayPassCustom("Turning %s random damage spread...", g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
                     g_cvDisableDamageSpread.BoolValue = !g_cvDisableDamageSpread.BoolValue;
                 } else {
                     vote.DisplayFail(NativeVotesFail_Loses);
@@ -136,7 +139,7 @@ public int HandleSpreadVote (NativeVote vote, MenuAction action, int client, int
     }
 }
 
-public int HandlePushVote (NativeVote vote, MenuAction action, int client, int items) {
+public int HandlePushVote(NativeVote vote, MenuAction action, int client, int items) {
     switch (action) {
         case MenuAction_End: {
             vote.Close();
@@ -152,20 +155,8 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
             if (client == NATIVEVOTES_VOTE_NO || client == NATIVEVOTES_VOTE_INVALID) {
                 vote.DisplayFail(NativeVotesFail_Loses);
             } else {
-                char item[64];
-                float percent, limit;
-                int votes, totalVotes;
-
-                GetMenuVoteInfo(items, votes, totalVotes);
-                vote.GetItem(client, item, sizeof(item));
-
-                percent = float(votes) / float (totalVotes);
-                limit = g_cvPushVoteMenuPercent.FloatValue;
-
-                if (FloatCompare(percent, limit) >= 0 && StrEqual(item, "yes")) {
-                    char toggleType[TOGGLETYPE_LENGTH];
-                    strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
-                    vote.DisplayPassCustom("Turning %s pre-round damage push...", toggleType);
+                if (CountVote(vote, client, items, false)) {
+                    vote.DisplayPassCustom("Turning %s pre-round damage push...", g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
                     g_cvPreRoundPushEnable.BoolValue = !g_cvPreRoundPushEnable.BoolValue;
                 } else {
                     vote.DisplayFail(NativeVotesFail_Loses);
@@ -177,9 +168,7 @@ public int HandlePushVote (NativeVote vote, MenuAction action, int client, int i
 
 public Action Cmd_HandleVoteSpread(int client, int args) {
     if (g_cvSpreadVoteAllowed.BoolValue && client != 0) {
-        char toggleType[TOGGLETYPE_LENGTH];
-        strcopy(toggleType, sizeof(toggleType), g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
-        StartVote(client, true, toggleType);
+        StartVote(client, true, g_cvDisableDamageSpread.BoolValue ? "on" : "off" );
         return Plugin_Handled;
     } else {
         return Plugin_Continue;
@@ -188,9 +177,7 @@ public Action Cmd_HandleVoteSpread(int client, int args) {
 
 public Action Cmd_HandleVotePush(int client, int args) {
     if (g_cvPushVoteAllowed.BoolValue && client != 0) {
-        char toggleType[TOGGLETYPE_LENGTH];
-        strcopy(toggleType, sizeof(toggleType), g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
-        StartVote(client, false, toggleType);
+        StartVote(client, false, g_cvPreRoundPushEnable.BoolValue ? "off" : "on" );
         return Plugin_Handled;
     } else {
         return Plugin_Continue;
