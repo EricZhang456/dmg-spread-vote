@@ -100,7 +100,7 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
     isSpreadVote ? (g_iLastSpreadVoteTime = GetTime()) : (g_iLastPushVoteTime = GetTime());
 }
 
-bool CountVote (NativeVote vote, int client, int items, bool isSpreadVote) {
+bool CountVote(NativeVote vote, int client, int items, bool isSpreadVote) {
     char item[64];
     int votes, totalVotes;
 
