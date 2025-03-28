@@ -13,7 +13,7 @@ public Plugin myinfo = {
     name = "TF2 Damage Spread and Pre-Round Push Vote",
     author = "Eric Zhang",
     description = "Vote to toggle damage spread and pre-round push in TF2.",
-    version = "1.0",
+    version = "1.1",
     url = "https://ericaftereric.top"
 }
 
@@ -64,7 +64,6 @@ public void TF2_OnWaitingForPlayersEnd() {
 
 void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
     if (g_bNativeVotesLoaded) {
-        int voteCooldownTimePassed = GetTime() - (isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime);
         if (NativeVotes_IsVoteInProgress()) {
             PrintToChat(client, "A vote is already in progress.");
             return;
@@ -77,9 +76,11 @@ void StartVote(int client, bool isSpreadVote, const char[] toggleType) {
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Spectators);
             return;
         }
+        int voteCooldownTimePassed = GetTime() - (isSpreadVote ? g_iLastSpreadVoteTime : g_iLastPushVoteTime);
         if (NativeVotes_CheckVoteDelay() != 0 || voteCooldownTimePassed < (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue)) {
-            int voteCooldownTimeLeft = (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue) - voteCooldownTimePassed;
-            if (voteCooldownTimeLeft > (isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue) || voteCooldownTimeLeft < 0) {
+            int voteCooldownTimeLimit = isSpreadVote ? g_cvSpreadVoteCooldown.IntValue : g_cvPushVoteCooldown.IntValue;
+            int voteCooldownTimeLeft = voteCooldownTimeLimit - voteCooldownTimePassed;
+            if (voteCooldownTimeLeft > voteCooldownTimeLeft || voteCooldownTimeLeft < 0) {
                 voteCooldownTimeLeft = 0;
             }
             NativeVotes_DisplayCallVoteFail(client, NativeVotesCallFail_Recent, NativeVotes_CheckVoteDelay() + voteCooldownTimeLeft);
